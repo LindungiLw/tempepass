@@ -67,11 +67,9 @@ export function generateBatchId(
   return `${prefix}${String(seq).padStart(2, "0")}`;
 }
 
-export function buildPassportUrl(batchId: string): string {
-  if (typeof window !== "undefined") {
-    return `${window.location.origin}/b/${encodeURIComponent(batchId)}`;
-  }
-  return `https://tempepass.example/b/${encodeURIComponent(batchId)}`;
+export function buildPassportUrl(batchId: string, origin?: string): string {
+  const base = origin || "https://tempepass.example";
+  return `${base}/b/${encodeURIComponent(batchId)}`;
 }
 
 export function extractBatchIdFromScan(rawValue: string): string {

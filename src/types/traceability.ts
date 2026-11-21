@@ -16,6 +16,7 @@ export type BatchGrade = "export_vacuum" | "retail_fresh" | "artisan_leaf";
 export interface ProducerPreset {
   id: string;
   label: string;
+  labelEn: string;
   soybeanOrigin: string;
   soybeanOriginEn: string;
   soybeanVariety: string;

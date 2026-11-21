@@ -26,8 +26,10 @@ const STORAGE_KEYS = {
   producers: "tempepass_producers_v1",
   feedback: "tempepass_feedback_v1",
   session: "tempepass_session_v1",
-  locale: "tempepass_locale_v1",
+  locale: "tempepass_locale_v2",
 } as const;
+
+const DEFAULT_ORIGIN = "https://tempepass.example";
 
 interface TraceabilityContextValue {
   batches: TempeBatch[];
@@ -35,6 +37,7 @@ interface TraceabilityContextValue {
   feedback: BuyerFeedback[];
   locale: Locale;
   setLocale: (locale: Locale) => void;
+  appOrigin: string;
   activeProducerId: string | null;
   activeProducer: ProducerProfile | null;
   isHydrated: boolean;
@@ -97,7 +100,8 @@ export function TraceabilityProvider({
   const [producers, setProducers] = useState<ProducerProfile[]>(SEED_PRODUCERS);
   const [feedback, setFeedback] = useState<BuyerFeedback[]>(SEED_FEEDBACK);
   const [activeProducerId, setActiveProducerId] = useState<string | null>(null);
-  const [locale, setLocaleState] = useState<Locale>("id");
+  const [locale, setLocaleState] = useState<Locale>("en");
+  const [appOrigin, setAppOrigin] = useState<string>(DEFAULT_ORIGIN);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -112,13 +116,15 @@ export function TraceabilityProvider({
     setActiveProducerId(
       safeReadJson<string | null>(STORAGE_KEYS.session, null)
     );
-    const savedLocale = safeReadJson<Locale>(STORAGE_KEYS.locale, "id");
-    setLocaleState(savedLocale === "en" ? "en" : "id");
+    const savedLocale = safeReadJson<Locale>(STORAGE_KEYS.locale, "en");
+    setLocaleState(savedLocale === "id" ? "id" : "en");
+    setAppOrigin(window.location.origin);
     setIsHydrated(true);
   }, []);
 
   useEffect(() => {
     if (!isHydrated) return;
+    document.documentElement.lang = locale;
     try {
       window.localStorage.setItem(STORAGE_KEYS.batches, JSON.stringify(batches));
       window.localStorage.setItem(
@@ -153,13 +159,15 @@ export function TraceabilityProvider({
         return {
           ok: false,
           error:
-            "Email atau PIN tidak cocok. Gunakan akun demo di bawah untuk masuk instan.",
+            locale === "id"
+              ? "Email atau PIN tidak cocok. Gunakan akun demo di atas untuk masuk instan."
+              : "Email or PIN does not match. Use one of the demo workshop cards above for instant access.",
         };
       }
       setActiveProducerId(found.id);
       return { ok: true };
     },
-    [producers]
+    [locale, producers]
   );
 
   const loginDemoProducer = useCallback((producerId: string) => {
@@ -304,6 +312,7 @@ export function TraceabilityProvider({
       feedback,
       locale,
       setLocale,
+      appOrigin,
       activeProducerId,
       activeProducer,
       isHydrated,
@@ -327,6 +336,7 @@ export function TraceabilityProvider({
       feedback,
       locale,
       setLocale,
+      appOrigin,
       activeProducerId,
       activeProducer,
       isHydrated,
