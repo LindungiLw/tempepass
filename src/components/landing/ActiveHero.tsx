@@ -37,6 +37,7 @@ export function ActiveHero() {
     batches,
     producers,
     locale,
+    appOrigin,
     setScannerOpen,
     activeProducer,
   } = useTraceability();
@@ -399,7 +400,10 @@ export function ActiveHero() {
                           <div className="flex flex-row items-center justify-between gap-4 rounded-2xl bg-[#FAF6EE] p-3 ring-1 ring-[#E2D5BE] sm:col-span-4 sm:flex-col sm:justify-center">
                             <div className="relative overflow-hidden rounded-xl bg-white p-2.5 ring-1 ring-[#E2D5BE]">
                               <QRCodeSVG
-                                value={buildPassportUrl(selectedBatch.id)}
+                                value={buildPassportUrl(
+                                  selectedBatch.id,
+                                  appOrigin
+                                )}
                                 size={92}
                                 bgColor="#FFFFFF"
                                 fgColor="#24170E"

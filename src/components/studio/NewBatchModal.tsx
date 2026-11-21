@@ -27,48 +27,29 @@ export function NewBatchModal({
   producer,
   onCreated,
 }: NewBatchModalProps) {
-  const { batches, addBatch } = useTraceability();
+  const { batches, addBatch, locale } = useTraceability();
   const defaultPreset = producer.presets[0];
 
-  const today = new Date().toISOString().slice(0, 10);
-
-  const [productName, setProductName] = useState(
-    defaultPreset
-      ? `Tempe ${defaultPreset.label.split("(")[0].trim()}`
-      : "Tempe Kedelai Murni Vacuum"
-  );
-  const [netWeightGrams, setNetWeightGrams] = useState(
-    defaultPreset?.defaultWeightGrams ?? 250
-  );
+  const [productName, setProductName] = useState("");
+  const [netWeightGrams, setNetWeightGrams] = useState(250);
   const [quantityPacks, setQuantityPacks] = useState(150);
   const [grade, setGrade] = useState<BatchGrade>("export_vacuum");
-  const [soybeanOrigin, setSoybeanOrigin] = useState(
-    defaultPreset?.soybeanOrigin ?? "Kedelai Lokal Grobogan Non-GMO"
-  );
-  const [soybeanVariety, setSoybeanVariety] = useState(
-    defaultPreset?.soybeanVariety ?? "Varietas Grobogan Grade 1"
-  );
+  const [soybeanOrigin, setSoybeanOrigin] = useState("");
+  const [soybeanOriginEn, setSoybeanOriginEn] = useState("");
+  const [soybeanVariety, setSoybeanVariety] = useState("");
   const [soybeanLotNumber, setSoybeanLotNumber] = useState("SOY-GRB-2611-09A");
-  const [ragiBrandAndStrain, setRagiBrandAndStrain] = useState(
-    defaultPreset?.ragiBrandAndStrain ?? "Raprima (Rhizopus oligosporus)"
-  );
+  const [ragiBrandAndStrain, setRagiBrandAndStrain] = useState("");
   const [ragiLotNumber, setRagiLotNumber] = useState("RPR-26-098");
-  const [waterSource, setWaterSource] = useState(
-    defaultPreset?.waterSource ?? "Air Filtrasi RO + Rebus 100°C"
-  );
-  const [packagingType, setPackagingType] = useState(
-    defaultPreset?.packagingType ?? "Plastik Vacuum Food-Grade PA/PE 85 Micron"
-  );
-  const [productionDate, setProductionDate] = useState(today);
-  const [fermentationHours, setFermentationHours] = useState(
-    defaultPreset?.defaultFermentationHours ?? 36
-  );
+  const [waterSource, setWaterSource] = useState("");
+  const [waterSourceEn, setWaterSourceEn] = useState("");
+  const [packagingType, setPackagingType] = useState("");
+  const [packagingTypeEn, setPackagingTypeEn] = useState("");
+  const [productionDate, setProductionDate] = useState("");
+  const [fermentationHours, setFermentationHours] = useState(36);
   const [fermentationTempC, setFermentationTempC] = useState(31.5);
   const [channel, setChannel] =
     useState<DistributionChannel>("export_consignment");
-  const [destination, setDestination] = useState(
-    "Ritel Modern & Sampel Ekspor Surabaya"
-  );
+  const [destination, setDestination] = useState("");
   const [initialStatus, setInitialStatus] = useState<"fermenting" | "packaged">(
     "packaged"
   );
@@ -81,6 +62,39 @@ export function NewBatchModal({
 
   useEffect(() => {
     if (!open) return;
+    const today = new Date().toISOString().slice(0, 10);
+    setProductionDate(today);
+    setDestination(
+      locale === "id"
+        ? "Ritel Modern & Sampel Ekspor Surabaya"
+        : "Modern Retail & Surabaya Export Sample"
+    );
+    if (defaultPreset) {
+      setProductName(
+        locale === "id"
+          ? `Tempe ${defaultPreset.label.split("(")[0].trim()}`
+          : `Tempe ${defaultPreset.labelEn.split("(")[0].trim()}`
+      );
+      setNetWeightGrams(defaultPreset.defaultWeightGrams);
+      setSoybeanOrigin(defaultPreset.soybeanOrigin);
+      setSoybeanOriginEn(defaultPreset.soybeanOriginEn);
+      setSoybeanVariety(defaultPreset.soybeanVariety);
+      setRagiBrandAndStrain(defaultPreset.ragiBrandAndStrain);
+      setWaterSource(defaultPreset.waterSource);
+      setWaterSourceEn(defaultPreset.waterSourceEn);
+      setPackagingType(defaultPreset.packagingType);
+      setPackagingTypeEn(defaultPreset.packagingTypeEn);
+      setFermentationHours(defaultPreset.defaultFermentationHours);
+      setGrade(
+        defaultPreset.labelEn.toLowerCase().includes("leaf")
+          ? "artisan_leaf"
+          : "export_vacuum"
+      );
+    }
+  }, [open, producer.id, defaultPreset, locale]);
+
+  useEffect(() => {
+    if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
@@ -89,16 +103,23 @@ export function NewBatchModal({
   }, [open, onClose]);
 
   const applyPreset = (preset: ProducerPreset) => {
-    setProductName(`Tempe ${preset.label.split("(")[0].trim()}`);
+    setProductName(
+      locale === "id"
+        ? `Tempe ${preset.label.split("(")[0].trim()}`
+        : `Tempe ${preset.labelEn.split("(")[0].trim()}`
+    );
     setNetWeightGrams(preset.defaultWeightGrams);
     setSoybeanOrigin(preset.soybeanOrigin);
+    setSoybeanOriginEn(preset.soybeanOriginEn);
     setSoybeanVariety(preset.soybeanVariety);
     setRagiBrandAndStrain(preset.ragiBrandAndStrain);
     setWaterSource(preset.waterSource);
+    setWaterSourceEn(preset.waterSourceEn);
     setPackagingType(preset.packagingType);
+    setPackagingTypeEn(preset.packagingTypeEn);
     setFermentationHours(preset.defaultFermentationHours);
     setGrade(
-      preset.label.toLowerCase().includes("daun")
+      preset.labelEn.toLowerCase().includes("leaf")
         ? "artisan_leaf"
         : "export_vacuum"
     );
@@ -106,13 +127,14 @@ export function NewBatchModal({
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
+    const safeDate = productionDate || new Date().toISOString().slice(0, 10);
     const newId = generateBatchId(
       producer.code,
-      productionDate,
+      safeDate,
       batches.map((b) => b.id)
     );
 
-    const prodDateObj = new Date(`${productionDate}T06:00:00+07:00`);
+    const prodDateObj = new Date(`${safeDate}T06:00:00+07:00`);
     const roomExpiry = new Date(prodDateObj);
     roomExpiry.setDate(roomExpiry.getDate() + 4);
     const chilledExpiry = new Date(prodDateObj);
@@ -120,38 +142,42 @@ export function NewBatchModal({
       chilledExpiry.getDate() + (grade === "export_vacuum" ? 16 : 9)
     );
     const nowIso = new Date().toISOString();
-
     const isDone = initialStatus === "packaged";
+
+    const cleanName = productName.trim() || "Pure Soybean Tempe";
 
     const created: TempeBatch = {
       id: newId,
       producerId: producer.id,
-      productName: productName.trim() || "Tempe Kedelai Murni",
-      productNameEn: `${productName.trim() || "Pure Soybean Tempe"} (${netWeightGrams}g)`,
+      productName: cleanName,
+      productNameEn: cleanName,
       netWeightGrams,
       quantityPacks,
       status: initialStatus,
       grade,
       fermentationProgressPct: isDone ? 100 : 45,
       rawMaterials: {
-        soybeanOrigin,
-        soybeanOriginEn: soybeanOrigin,
-        soybeanVariety,
+        soybeanOrigin: soybeanOrigin || "Kedelai Lokal Non-GMO",
+        soybeanOriginEn: soybeanOriginEn || "Local Non-GMO Soybeans",
+        soybeanVariety: soybeanVariety || "Grobogan Grade 1",
         nonGmoVerified: true,
         soybeanLotNumber: soybeanLotNumber.trim() || "SOY-LOT-NEW",
-        ragiBrandAndStrain,
+        ragiBrandAndStrain:
+          ragiBrandAndStrain || "Raprima (Pure Rhizopus oligosporus)",
         ragiLotNumber: ragiLotNumber.trim() || "RPR-LOT-NEW",
-        waterSource,
-        waterSourceEn: waterSource,
+        waterSource: waterSource || "Air Filtrasi RO + Rebus 100°C",
+        waterSourceEn: waterSourceEn || "RO Filtered Water, Boiled at 100°C",
       },
       production: {
-        productionDate,
-        inoculationTime: `${productionDate}T16:00:00+07:00`,
+        productionDate: safeDate,
+        inoculationTime: `${safeDate}T16:00:00+07:00`,
         fermentationHours,
         fermentationTempC,
         fermentationHumidityPct: 76,
-        packagingType,
-        packagingTypeEn: packagingType,
+        packagingType:
+          packagingType || "Plastik Vacuum Food-Grade PA/PE 85 Micron",
+        packagingTypeEn:
+          packagingTypeEn || "Food-Grade PA/PE Vacuum Pouch (85 Micron)",
         packagedAt: isDone ? nowIso : null,
         bestBeforeRoom: roomExpiry.toISOString().slice(0, 10),
         bestBeforeChilled: chilledExpiry.toISOString().slice(0, 10),
@@ -167,7 +193,7 @@ export function NewBatchModal({
       },
       distribution: {
         channel,
-        destination: destination.trim() || "Mitra Distribusi Lokal",
+        destination: destination.trim() || "Mitra Distribusi",
         destinationEn: destination.trim() || "Distribution Partner",
         coldChainRequired: channel === "export_consignment",
         dispatchDate: null,
@@ -178,7 +204,7 @@ export function NewBatchModal({
           titleId: "Perendaman & Pengupasan Kulit Ari",
           titleEn: "Soaking & Dehulling",
           hourMark: "00h - 12h",
-          timestamp: `${productionDate}T05:00:00+07:00`,
+          timestamp: `${safeDate}T05:00:00+07:00`,
           temperatureC: 27.4,
           humidityPct: 71,
           completed: true,
@@ -190,7 +216,7 @@ export function NewBatchModal({
           titleId: "Perebusan & Penirisan Higienis",
           titleEn: "Boiling & Hygienic Draining",
           hourMark: "12h - 15h",
-          timestamp: `${productionDate}T14:00:00+07:00`,
+          timestamp: `${safeDate}T14:00:00+07:00`,
           temperatureC: 99.2,
           humidityPct: 81,
           completed: true,
@@ -202,7 +228,7 @@ export function NewBatchModal({
           titleId: "Inokulasi Ragi Rhizopus",
           titleEn: "Rhizopus Culture Inoculation",
           hourMark: "15h - 16h",
-          timestamp: `${productionDate}T16:00:00+07:00`,
+          timestamp: `${safeDate}T16:00:00+07:00`,
           temperatureC: 30.1,
           humidityPct: 73,
           completed: true,
@@ -242,7 +268,7 @@ export function NewBatchModal({
             ? `Dikemas dengan ${packagingType} dan diberi stiker QR ${newId}.`
             : "Menunggu penyelesaian tahap inkubasi.",
           noteEn: isDone
-            ? `Sealed in ${packagingType} with Batch QR ${newId}.`
+            ? `Sealed in ${packagingTypeEn} with Batch QR ${newId}.`
             : "Pending completion of fermentation stage.",
         },
       ],
@@ -283,24 +309,28 @@ export function NewBatchModal({
                     id="new-batch-title"
                     className="font-serif text-2xl font-semibold text-[#24170E]"
                   >
-                    Catat Batch Produksi Baru
+                    {locale === "id"
+                      ? "Catat Batch Produksi Baru"
+                      : "Log New Production Batch"}
                   </h2>
                   <p className="mt-1 text-xs text-[#634B3A]">
-                    Gunakan preset bahan baku agar input batch pagi selesai
-                    dalam dua menit.
+                    {locale === "id"
+                      ? "Gunakan preset bahan baku agar input batch pagi selesai dalam dua menit."
+                      : "Apply a saved raw-material preset to log a morning batch in under two minutes."}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={onClose}
-                  aria-label="Tutup form batch"
+                  aria-label={
+                    locale === "id" ? "Tutup form batch" : "Close batch form"
+                  }
                   className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F2EAD9] text-[#24170E] hover:bg-[#E2D5BE]"
                 >
                   <X size={18} weight="bold" />
                 </button>
               </div>
 
-              {/* 1-Click Raw Material Presets */}
               {producer.presets.length > 0 && (
                 <div className="mt-4">
                   <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#634B3A]">
@@ -309,7 +339,9 @@ export function NewBatchModal({
                       weight="fill"
                       className="text-[#9A4D1A]"
                     />
-                    Isi Cepat dari Preset Bahan Baku
+                    {locale === "id"
+                      ? "Isi Cepat dari Preset Bahan Baku"
+                      : "Quick-Fill Material Presets"}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {producer.presets.map((preset) => (
@@ -319,7 +351,7 @@ export function NewBatchModal({
                         onClick={() => applyPreset(preset)}
                         className="min-h-[38px] rounded-xl bg-[#FAF6EE] px-3.5 text-xs font-semibold text-[#24170E] ring-1 ring-[#E2D5BE] transition-colors hover:bg-[#9A4D1A] hover:text-white"
                       >
-                        {preset.label}
+                        {locale === "id" ? preset.label : preset.labelEn}
                       </button>
                     ))}
                   </div>
@@ -333,7 +365,9 @@ export function NewBatchModal({
                       htmlFor="nb-name"
                       className="block text-xs font-semibold uppercase tracking-wider text-[#634B3A]"
                     >
-                      Nama Produk Tempe
+                      {locale === "id"
+                        ? "Nama Produk Tempe"
+                        : "Tempe Product Name"}
                     </label>
                     <input
                       id="nb-name"
@@ -350,7 +384,9 @@ export function NewBatchModal({
                       htmlFor="nb-date"
                       className="block text-xs font-semibold uppercase tracking-wider text-[#634B3A]"
                     >
-                      Tanggal Produksi
+                      {locale === "id"
+                        ? "Tanggal Produksi"
+                        : "Production Date"}
                     </label>
                     <input
                       id="nb-date"
@@ -367,7 +403,9 @@ export function NewBatchModal({
                       htmlFor="nb-status"
                       className="block text-xs font-semibold uppercase tracking-wider text-[#634B3A]"
                     >
-                      Status Awal Batch
+                      {locale === "id"
+                        ? "Status Awal Batch"
+                        : "Initial Batch Status"}
                     </label>
                     <select
                       id="nb-status"
@@ -380,10 +418,14 @@ export function NewBatchModal({
                       className="mt-1.5 min-h-[44px] w-full rounded-xl border border-[#E2D5BE] bg-[#FAF6EE] px-3.5 text-sm text-[#24170E]"
                     >
                       <option value="packaged">
-                        Siap Distribusi (QR Siap Tempel)
+                        {locale === "id"
+                          ? "Siap Distribusi (QR Siap Tempel)"
+                          : "Packaged & Ready (QR Active)"}
                       </option>
                       <option value="fermenting">
-                        Sedang Inkubasi di Rak Fermentasi
+                        {locale === "id"
+                          ? "Sedang Inkubasi di Rak Fermentasi"
+                          : "Currently Incubating on Racks"}
                       </option>
                     </select>
                   </div>
@@ -393,7 +435,9 @@ export function NewBatchModal({
                       htmlFor="nb-qty"
                       className="block text-xs font-semibold uppercase tracking-wider text-[#634B3A]"
                     >
-                      Jumlah Kemasan (Pack)
+                      {locale === "id"
+                        ? "Jumlah Kemasan (Pack)"
+                        : "Quantity (Packs)"}
                     </label>
                     <input
                       id="nb-qty"
@@ -412,7 +456,9 @@ export function NewBatchModal({
                       htmlFor="nb-weight"
                       className="block text-xs font-semibold uppercase tracking-wider text-[#634B3A]"
                     >
-                      Berat Bersih (Gram)
+                      {locale === "id"
+                        ? "Berat Bersih (Gram)"
+                        : "Net Weight (Grams)"}
                     </label>
                     <input
                       id="nb-weight"
@@ -433,7 +479,9 @@ export function NewBatchModal({
                       htmlFor="nb-soy-lot"
                       className="block text-xs font-semibold uppercase tracking-wider text-[#634B3A]"
                     >
-                      Nomor Lot Kedelai
+                      {locale === "id"
+                        ? "Nomor Lot Kedelai"
+                        : "Soybean Lot Number"}
                     </label>
                     <input
                       id="nb-soy-lot"
@@ -450,7 +498,9 @@ export function NewBatchModal({
                       htmlFor="nb-ragi-lot"
                       className="block text-xs font-semibold uppercase tracking-wider text-[#634B3A]"
                     >
-                      Nomor Lot Ragi
+                      {locale === "id"
+                        ? "Nomor Lot Ragi"
+                        : "Starter Culture Lot"}
                     </label>
                     <input
                       id="nb-ragi-lot"
@@ -467,7 +517,9 @@ export function NewBatchModal({
                       htmlFor="nb-hours"
                       className="block text-xs font-semibold uppercase tracking-wider text-[#634B3A]"
                     >
-                      Durasi Fermentasi (Jam)
+                      {locale === "id"
+                        ? "Durasi Fermentasi (Jam)"
+                        : "Fermentation Hours"}
                     </label>
                     <input
                       id="nb-hours"
@@ -487,7 +539,9 @@ export function NewBatchModal({
                       htmlFor="nb-temp"
                       className="block text-xs font-semibold uppercase tracking-wider text-[#634B3A]"
                     >
-                      Suhu Ruang Inkubasi (°C)
+                      {locale === "id"
+                        ? "Suhu Ruang Inkubasi (°C)"
+                        : "Incubation Room Temp (°C)"}
                     </label>
                     <input
                       id="nb-temp"
@@ -508,7 +562,9 @@ export function NewBatchModal({
                       htmlFor="nb-channel"
                       className="block text-xs font-semibold uppercase tracking-wider text-[#634B3A]"
                     >
-                      Target Distribusi
+                      {locale === "id"
+                        ? "Target Distribusi"
+                        : "Distribution Channel"}
                     </label>
                     <select
                       id="nb-channel"
@@ -519,13 +575,19 @@ export function NewBatchModal({
                       className="mt-1.5 min-h-[44px] w-full rounded-xl border border-[#E2D5BE] bg-[#FAF6EE] px-3.5 text-sm text-[#24170E]"
                     >
                       <option value="export_consignment">
-                        Konsinyasi Ekspor / Sampel
+                        {locale === "id"
+                          ? "Konsinyasi Ekspor / Sampel"
+                          : "Export Consignment / Sample"}
                       </option>
                       <option value="modern_retail">
-                        Ritel Modern / Kafe Organik
+                        {locale === "id"
+                          ? "Ritel Modern / Kafe Organik"
+                          : "Modern Retail / Specialty Grocer"}
                       </option>
                       <option value="local_market">
-                        Pasar Lokal &amp; Reseller
+                        {locale === "id"
+                          ? "Pasar Lokal & Reseller"
+                          : "Local Market & Resellers"}
                       </option>
                     </select>
                   </div>
@@ -535,7 +597,7 @@ export function NewBatchModal({
                       htmlFor="nb-dest"
                       className="block text-xs font-semibold uppercase tracking-wider text-[#634B3A]"
                     >
-                      Tujuan Pengiriman
+                      {locale === "id" ? "Tujuan Pengiriman" : "Destination"}
                     </label>
                     <input
                       id="nb-dest"
@@ -547,35 +609,51 @@ export function NewBatchModal({
                   </div>
                 </div>
 
-                {/* CPPB Daily Hygiene Checklist */}
                 <div className="rounded-2xl bg-[#FAF6EE] p-4 ring-1 ring-[#E2D5BE]">
                   <p className="text-xs font-semibold uppercase tracking-wider text-[#23603E]">
-                    Ceklis Sanitasi CPPB Hari Ini
+                    {locale === "id"
+                      ? "Ceklis Sanitasi CPPB Hari Ini"
+                      : "Daily CPPB Hygiene Checklist"}
                   </p>
                   <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
                     {[
                       {
-                        label: "Air filtrasi & direbus 100°C",
+                        label:
+                          locale === "id"
+                            ? "Air filtrasi & direbus 100°C"
+                            : "Filtered water boiled at 100°C",
                         checked: cppbWater,
                         toggle: setCppbWater,
                       },
                       {
-                        label: "Panci & alat stainless higienis",
+                        label:
+                          locale === "id"
+                            ? "Panci & alat stainless higienis"
+                            : "Stainless vats & tools sanitized",
                         checked: cppbUtensils,
                         toggle: setCppbUtensils,
                       },
                       {
-                        label: "Rak inkubasi bersih & kering",
+                        label:
+                          locale === "id"
+                            ? "Rak inkubasi bersih & kering"
+                            : "Clean, ventilated incubation racks",
                         checked: cppbRack,
                         toggle: setCppbRack,
                       },
                       {
-                        label: "Pekerja pakai celemek & penutup kepala",
+                        label:
+                          locale === "id"
+                            ? "Pekerja pakai celemek & penutup kepala"
+                            : "Handlers wearing aprons & hairnets",
                         checked: cppbGear,
                         toggle: setCppbGear,
                       },
                       {
-                        label: "Ruang simpan bebas hama",
+                        label:
+                          locale === "id"
+                            ? "Ruang simpan bebas hama"
+                            : "Dry, pest-free storage room",
                         checked: cppbPest,
                         toggle: setCppbPest,
                       },
@@ -602,13 +680,17 @@ export function NewBatchModal({
                     onClick={onClose}
                     className="min-h-[46px] rounded-full bg-[#F2EAD9] px-5 text-sm font-semibold text-[#24170E] hover:bg-[#E2D5BE]"
                   >
-                    Batal
+                    {locale === "id" ? "Batal" : "Cancel"}
                   </button>
                   <button
                     type="submit"
                     className="inline-flex min-h-[46px] items-center gap-2 rounded-full bg-[#9A4D1A] pl-5 pr-2 text-sm font-semibold text-white transition-colors hover:bg-[#7D3C12] active:scale-[0.98]"
                   >
-                    <span>Simpan &amp; Buat QR Batch</span>
+                    <span>
+                      {locale === "id"
+                        ? "Simpan & Buat QR Batch"
+                        : "Save & Generate Batch QR"}
+                    </span>
                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15">
                       <Check size={15} weight="bold" />
                     </span>

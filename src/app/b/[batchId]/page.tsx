@@ -25,7 +25,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${batch.id} · ${batch.productName}`,
+    title: `${batch.id} · ${batch.productNameEn}`,
     description: `${producer.name} (${producer.village}, ${producer.regency}) · ${batch.rawMaterials.soybeanVariety} · ${batch.production.fermentationHours}h fermentation · CPPB Verified.`,
   };
 }

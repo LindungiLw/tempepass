@@ -18,7 +18,8 @@ interface PrintLabelViewProps {
 }
 
 export function PrintLabelView({ batchId }: PrintLabelViewProps) {
-  const { getBatchById, getProducerById } = useTraceability();
+  const { getBatchById, getProducerById, locale, appOrigin } =
+    useTraceability();
   const [layoutMode, setLayoutMode] = useState<"thermal" | "a4">("a4");
   const svgContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -29,20 +30,26 @@ export function PrintLabelView({ batchId }: PrintLabelViewProps) {
     return (
       <main className="mx-auto max-w-2xl px-4 py-16 text-center">
         <h1 className="font-serif text-2xl font-semibold text-[#24170E]">
-          Batch tidak ditemukan untuk dicetak
+          {locale === "id"
+            ? "Batch tidak ditemukan untuk dicetak"
+            : "Batch not found for printing"}
         </h1>
         <Link
           href="/studio"
           className="mt-5 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#24170E] px-5 text-sm font-semibold text-white"
         >
           <ArrowLeft size={16} />
-          <span>Kembali ke Studio</span>
+          <span>
+            {locale === "id" ? "Kembali ke Studio" : "Back to Studio"}
+          </span>
         </Link>
       </main>
     );
   }
 
-  const passportUrl = buildPassportUrl(batch.id);
+  const passportUrl = buildPassportUrl(batch.id, appOrigin);
+  const productLabel =
+    locale === "id" ? batch.productName : batch.productNameEn;
 
   const handleDownloadSvg = () => {
     const svg = svgContainerRef.current?.querySelector("svg");
@@ -92,13 +99,13 @@ export function PrintLabelView({ batchId }: PrintLabelViewProps) {
             {batch.id}
           </p>
           <p className="line-clamp-2 text-[11px] font-semibold leading-snug">
-            {batch.productName}
+            {productLabel}
           </p>
           <p className="font-mono text-[10px] text-[#634B3A]">
-            Prod: {formatDate(batch.production.productionDate, "id")}
+            Prod: {formatDate(batch.production.productionDate, locale)}
           </p>
           <p className="font-mono text-[10px] font-semibold text-[#23603E]">
-            Chilled: {formatDate(batch.production.bestBeforeChilled, "id")}
+            Chilled: {formatDate(batch.production.bestBeforeChilled, locale)}
           </p>
         </div>
       </div>
@@ -108,14 +115,13 @@ export function PrintLabelView({ batchId }: PrintLabelViewProps) {
           <CheckCircle size={11} weight="fill" />
           CPPB Verified
         </span>
-        <span>SCAN FOR ORIGIN · ID/EN</span>
+        <span>SCAN FOR ORIGIN · EN/ID</span>
       </div>
     </div>
   );
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-20 pt-8 sm:px-6">
-      {/* Hidden standalone QR node for direct SVG download */}
       <div ref={svgContainerRef} className="hidden" aria-hidden="true">
         <QRCodeSVG
           value={passportUrl}
@@ -126,7 +132,6 @@ export function PrintLabelView({ batchId }: PrintLabelViewProps) {
         />
       </div>
 
-      {/* Controls Bar (Excluded from print output) */}
       <div className="no-print mb-8 flex flex-col justify-between gap-4 rounded-[1.5rem] bg-[#F2EAD9] p-5 ring-1 ring-[#E2D5BE] sm:flex-row sm:items-center">
         <div>
           <Link
@@ -134,13 +139,20 @@ export function PrintLabelView({ batchId }: PrintLabelViewProps) {
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#634B3A] hover:text-[#24170E]"
           >
             <ArrowLeft size={14} weight="bold" />
-            <span>Kembali ke Studio UMKM</span>
+            <span>
+              {locale === "id"
+                ? "Kembali ke Studio UMKM"
+                : "Back to MSME Studio"}
+            </span>
           </Link>
           <h1 className="mt-1 font-serif text-2xl font-semibold text-[#24170E]">
-            Cetak Stiker QR · <span className="font-mono">{batch.id}</span>
+            {locale === "id" ? "Cetak Stiker QR" : "Print QR Stickers"} ·{" "}
+            <span className="font-mono">{batch.id}</span>
           </h1>
           <p className="text-xs text-[#634B3A]">
-            {batch.productName} ({batch.quantityPacks} pack) · Tujuan QR:{" "}
+            {productLabel} ({batch.quantityPacks}{" "}
+            {locale === "id" ? "pack" : "packs"}) ·{" "}
+            {locale === "id" ? "Tujuan QR:" : "QR Destination:"}{" "}
             <span className="font-mono">{passportUrl}</span>
           </p>
         </div>
@@ -156,7 +168,7 @@ export function PrintLabelView({ batchId }: PrintLabelViewProps) {
                   : "text-[#634B3A]"
               }`}
             >
-              Lembar A4 (9 Stiker)
+              {locale === "id" ? "Lembar A4 (9 Stiker)" : "A4 Sheet (9 Labels)"}
             </button>
             <button
               type="button"
@@ -167,7 +179,7 @@ export function PrintLabelView({ batchId }: PrintLabelViewProps) {
                   : "text-[#634B3A]"
               }`}
             >
-              Thermal 1 Stiker
+              {locale === "id" ? "Thermal 1 Stiker" : "Single Thermal"}
             </button>
           </div>
 
@@ -177,14 +189,14 @@ export function PrintLabelView({ batchId }: PrintLabelViewProps) {
             className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-[#FFFDF9] px-4 text-xs font-semibold text-[#24170E] ring-1 ring-[#E2D5BE] hover:bg-[#FAF6EE]"
           >
             <DownloadSimple size={16} weight="bold" />
-            <span>Unduh SVG</span>
+            <span>{locale === "id" ? "Unduh SVG" : "Download SVG"}</span>
           </button>
 
           <Link
             href={`/b/${encodeURIComponent(batch.id)}`}
             className="inline-flex min-h-[42px] items-center gap-1 rounded-full bg-[#FFFDF9] px-4 text-xs font-semibold text-[#24170E] ring-1 ring-[#E2D5BE]"
           >
-            <span>Tes Paspor</span>
+            <span>{locale === "id" ? "Tes Paspor" : "Test Passport"}</span>
             <ArrowUpRight size={14} weight="bold" />
           </Link>
 
@@ -194,12 +206,11 @@ export function PrintLabelView({ batchId }: PrintLabelViewProps) {
             className="inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[#9A4D1A] px-5 text-xs font-semibold text-white hover:bg-[#7D3C12]"
           >
             <Printer size={16} weight="bold" />
-            <span>Cetak Sekarang</span>
+            <span>{locale === "id" ? "Cetak Sekarang" : "Print Now"}</span>
           </button>
         </div>
       </div>
 
-      {/* Printable Sheet */}
       {layoutMode === "thermal" ? (
         <div className="mx-auto max-w-xs">{renderStickerCard(0)}</div>
       ) : (

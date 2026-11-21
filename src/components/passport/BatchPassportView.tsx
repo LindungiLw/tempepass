@@ -56,6 +56,7 @@ export function BatchPassportView({ batchId }: BatchPassportViewProps) {
     batches,
     locale,
     setLocale,
+    appOrigin,
     setScannerOpen,
   } = useTraceability();
 
@@ -86,7 +87,7 @@ export function BatchPassportView({ batchId }: BatchPassportViewProps) {
   const handleCopyUrl = async () => {
     if (!batch) return;
     try {
-      await navigator.clipboard.writeText(buildPassportUrl(batch.id));
+      await navigator.clipboard.writeText(buildPassportUrl(batch.id, appOrigin));
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2200);
     } catch (error) {
@@ -232,7 +233,7 @@ export function BatchPassportView({ batchId }: BatchPassportViewProps) {
             aria-label="Passport Language"
             className="inline-flex rounded-full bg-[#F2EAD9] p-1 ring-1 ring-[#E2D5BE]"
           >
-            {(["id", "en"] as const).map((lang) => (
+            {(["en", "id"] as const).map((lang) => (
               <button
                 key={lang}
                 type="button"
@@ -708,7 +709,7 @@ export function BatchPassportView({ batchId }: BatchPassportViewProps) {
               </div>
               <div className="rounded-xl bg-white p-1.5">
                 <QRCodeSVG
-                  value={buildPassportUrl(batch.id)}
+                  value={buildPassportUrl(batch.id, appOrigin)}
                   size={68}
                   bgColor="#FFFFFF"
                   fgColor="#24170E"

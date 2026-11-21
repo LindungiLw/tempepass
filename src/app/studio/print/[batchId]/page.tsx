@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { PrintLabelView } from "@/components/studio/PrintLabelView";
 
 export const metadata: Metadata = {
-  title: "Cetak Stiker QR Kemasan",
-  description: "Lembar cetak stiker QR batch tempe untuk printer termal dan A4.",
+  title: "Print Package QR Stickers",
+  description:
+    "Print-ready tempe batch QR packaging stickers for thermal roll printers and A4 sticker sheets.",
 };
 
 interface PrintPageProps {

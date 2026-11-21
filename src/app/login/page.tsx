@@ -38,7 +38,9 @@ export default function ProducerLoginPage() {
     event.preventDefault();
     const res = loginAsProducer(email, pin);
     if (!res.ok) {
-      setError(res.error ?? "Gagal masuk.");
+      setError(
+        res.error ?? (locale === "id" ? "Gagal masuk." : "Sign in failed.")
+      );
       return;
     }
     router.push("/studio");
@@ -173,7 +175,7 @@ export default function ProducerLoginPage() {
                   htmlFor="login-email"
                   className="block text-xs font-semibold uppercase tracking-wider text-[#634B3A]"
                 >
-                  Email UMKM
+                  {locale === "id" ? "Email UMKM" : "Workshop Email"}
                 </label>
                 <input
                   id="login-email"
@@ -193,7 +195,9 @@ export default function ProducerLoginPage() {
                   htmlFor="login-pin"
                   className="block text-xs font-semibold uppercase tracking-wider text-[#634B3A]"
                 >
-                  PIN Operasional (Demo: 2026)
+                  {locale === "id"
+                    ? "PIN Operasional (Demo: 2026)"
+                    : "Operational PIN (Demo: 2026)"}
                 </label>
                 <div className="relative mt-1.5">
                   <Key

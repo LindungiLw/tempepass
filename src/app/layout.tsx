@@ -14,11 +14,11 @@ import { QrScannerModal } from "@/components/QrScannerModal";
 
 export const metadata: Metadata = {
   title: {
-    default: "TempePass | Web Traceability UMKM Tempe Indonesia",
+    default: "TempePass | Web Traceability for Indonesian Tempe MSMEs",
     template: "%s | TempePass",
   },
   description:
-    "Sistem traceability berbasis web dan QR code untuk membantu UMKM tempe Indonesia mencatat asal kedelai, fermentasi, sanitasi CPPB, dan kesiapan akses pasar internasional.",
+    "Web-based batch traceability and QR passport system helping Indonesian tempe MSMEs document soybean origin, fermentation logs, CPPB hygiene, and export readiness.",
 };
 
 export default function RootLayout({
@@ -27,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id">
+    <html lang="en">
       <body className="min-h-dvh bg-[#FAF6EE] text-[#24170E] antialiased selection:bg-[#9A4D1A] selection:text-[#FFFDF9]">
         <TraceabilityProvider>
           <MotionProvider>

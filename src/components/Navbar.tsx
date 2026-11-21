@@ -101,7 +101,7 @@ export function Navbar() {
             aria-label="Language"
             className="inline-flex rounded-full bg-[#F2EAD9] p-1 ring-1 ring-[#E2D5BE]"
           >
-            {(["id", "en"] as const).map((lang) => (
+            {(["en", "id"] as const).map((lang) => (
               <button
                 key={lang}
                 type="button"
@@ -192,7 +192,7 @@ export function Navbar() {
                   {locale === "id" ? "Bahasa" : "Language"}
                 </span>
                 <div className="inline-flex rounded-full bg-[#FAF6EE] p-1 ring-1 ring-[#E2D5BE]">
-                  {(["id", "en"] as const).map((lang) => (
+                  {(["en", "id"] as const).map((lang) => (
                     <button
                       key={lang}
                       type="button"

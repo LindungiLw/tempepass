@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { StudioWorkspace } from "@/components/studio/StudioWorkspace";
 
 export const metadata: Metadata = {
-  title: "Studio Pengrajin UMKM",
+  title: "MSME Producer Studio",
   description:
-    "Kelola batch produksi tempe, ceklis sanitasi CPPB, pesan buyer, dan cetak stiker QR kemasan.",
+    "Manage tempe production batches, daily CPPB hygiene checks, buyer inquiries, and printable package QR stickers.",
 };
 
 export default function StudioPage() {

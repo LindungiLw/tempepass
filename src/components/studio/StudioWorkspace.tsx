@@ -28,7 +28,7 @@ import {
   getChannelLabel,
   getStatusLabel,
 } from "@/lib/format";
-import { BatchStatus, TempeBatch } from "@/types/traceability";
+import { BatchStatus, Locale, TempeBatch } from "@/types/traceability";
 import { EASE_OUT_EXPO, SPRING_TACTILE } from "@/components/MotionProvider";
 import { NewBatchModal } from "./NewBatchModal";
 
@@ -38,10 +38,10 @@ const NEXT_STATUS: Partial<Record<BatchStatus, BatchStatus>> = {
   packaged: "dispatched",
 };
 
-const NEXT_STATUS_CTA: Partial<Record<BatchStatus, string>> = {
-  fermenting: "Lolos Inkubasi",
-  quality_check: "Segel & Siap QR",
-  packaged: "Tandai Terkirim",
+const NEXT_STATUS_CTA: Partial<Record<BatchStatus, Record<Locale, string>>> = {
+  fermenting: { en: "Pass Incubation", id: "Lolos Inkubasi" },
+  quality_check: { en: "Seal & Activate QR", id: "Segel & Siap QR" },
+  packaged: { en: "Mark Dispatched", id: "Tandai Terkirim" },
 };
 
 export function StudioWorkspace() {
@@ -51,6 +51,8 @@ export function StudioWorkspace() {
     isHydrated,
     batches,
     feedback,
+    locale,
+    appOrigin,
     logoutProducer,
     updateBatchStatus,
     updateProducerProfile,
@@ -68,7 +70,8 @@ export function StudioWorkspace() {
   const [profileOwner, setProfileOwner] = useState("");
   const [profilePirt, setProfilePirt] = useState("");
   const [profileHalal, setProfileHalal] = useState("");
-  const [profileStory, setProfileStory] = useState("");
+  const [profileStoryEn, setProfileStoryEn] = useState("");
+  const [profileStoryId, setProfileStoryId] = useState("");
   const [profileSaved, setProfileSaved] = useState(false);
 
   useEffect(() => {
@@ -83,7 +86,8 @@ export function StudioWorkspace() {
     setProfileOwner(activeProducer.ownerName);
     setProfilePirt(activeProducer.pirtNumber);
     setProfileHalal(activeProducer.halalNumber);
-    setProfileStory(activeProducer.storyId);
+    setProfileStoryEn(activeProducer.storyEn);
+    setProfileStoryId(activeProducer.storyId);
   }, [activeProducer]);
 
   const myBatches = useMemo(() => {
@@ -100,6 +104,7 @@ export function StudioWorkspace() {
         !q ||
         b.id.toLowerCase().includes(q) ||
         b.productName.toLowerCase().includes(q) ||
+        b.productNameEn.toLowerCase().includes(q) ||
         b.rawMaterials.soybeanLotNumber.toLowerCase().includes(q);
       return matchesStatus && matchesQuery;
     });
@@ -125,7 +130,8 @@ export function StudioWorkspace() {
       ownerName: profileOwner.trim() || activeProducer.ownerName,
       pirtNumber: profilePirt.trim(),
       halalNumber: profileHalal.trim(),
-      storyId: profileStory.trim(),
+      storyEn: profileStoryEn.trim(),
+      storyId: profileStoryId.trim(),
     });
     setProfileSaved(true);
     window.setTimeout(() => setProfileSaved(false), 2400);
@@ -133,17 +139,19 @@ export function StudioWorkspace() {
 
   return (
     <main className="mx-auto max-w-7xl px-4 pb-20 pt-8 sm:px-6 lg:px-8">
-      {/* Purpose-Built Producer Header (No Fake Stat Cards!) */}
       <section className="rounded-[1.75rem] bg-[#F2EAD9] p-2 ring-1 ring-[#E2D5BE]">
         <div className="flex flex-col justify-between gap-5 rounded-[1.25rem] bg-[#FFFDF9] p-5 sm:p-6 lg:flex-row lg:items-center">
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E7F2EC] px-2.5 py-1 text-xs font-semibold text-[#23603E]">
                 <ShieldCheck size={14} weight="fill" />
-                {activeProducer.cppbStatus}
+                {locale === "id"
+                  ? activeProducer.cppbStatus
+                  : activeProducer.cppbStatusEn}
               </span>
               <span className="font-mono text-xs text-[#634B3A]">
-                Kode Sentra: {activeProducer.code}
+                {locale === "id" ? "Kode Sentra:" : "Workshop Code:"}{" "}
+                {activeProducer.code}
               </span>
             </div>
             <h1 className="mt-2 font-serif text-2xl font-semibold tracking-tight text-[#24170E] sm:text-3xl">
@@ -151,7 +159,8 @@ export function StudioWorkspace() {
             </h1>
             <p className="mt-1 text-sm text-[#634B3A]">
               {activeProducer.village}, {activeProducer.district},{" "}
-              {activeProducer.regency} · Penanggung jawab:{" "}
+              {activeProducer.regency} ·{" "}
+              {locale === "id" ? "Penanggung jawab:" : "Lead operator:"}{" "}
               <span className="font-medium text-[#24170E]">
                 {activeProducer.ownerName}
               </span>
@@ -164,7 +173,9 @@ export function StudioWorkspace() {
               onClick={() => setModalOpen(true)}
               className="group inline-flex min-h-[48px] items-center gap-2.5 rounded-full bg-[#9A4D1A] pl-5 pr-2 text-sm font-semibold text-white transition-colors hover:bg-[#7D3C12] active:scale-[0.98]"
             >
-              <span>Catat Batch Baru</span>
+              <span>
+                {locale === "id" ? "Catat Batch Baru" : "Log New Batch"}
+              </span>
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15">
                 <Plus size={16} weight="bold" />
               </span>
@@ -179,13 +190,12 @@ export function StudioWorkspace() {
               className="inline-flex min-h-[48px] items-center gap-2 rounded-full bg-[#F2EAD9] px-4 text-sm font-semibold text-[#24170E] ring-1 ring-[#E2D5BE] transition-colors hover:bg-[#E2D5BE]"
             >
               <SignOut size={17} />
-              <span>Keluar</span>
+              <span>{locale === "id" ? "Keluar" : "Sign Out"}</span>
             </button>
           </div>
         </div>
       </section>
 
-      {/* Instant QR Ready Banner After Creating a Batch */}
       <AnimatePresence>
         {justCreated && (
           <motion.div
@@ -199,21 +209,28 @@ export function StudioWorkspace() {
               <div className="flex items-center gap-4">
                 <div className="rounded-xl bg-white p-2">
                   <QRCodeSVG
-                    value={buildPassportUrl(justCreated.id)}
+                    value={buildPassportUrl(justCreated.id, appOrigin)}
                     size={64}
                     fgColor="#24170E"
                   />
                 </div>
                 <div>
                   <p className="font-mono text-xs font-bold text-[#EBB44C]">
-                    BATCH BARU TERDAFTAR · {justCreated.id}
+                    {locale === "id"
+                      ? `BATCH BARU TERDAFTAR · ${justCreated.id}`
+                      : `NEW BATCH REGISTERED · ${justCreated.id}`}
                   </p>
                   <p className="mt-0.5 font-serif text-lg font-semibold">
-                    {justCreated.productName} ({justCreated.quantityPacks} pack)
+                    {locale === "id"
+                      ? justCreated.productName
+                      : justCreated.productNameEn}{" "}
+                    ({justCreated.quantityPacks}{" "}
+                    {locale === "id" ? "pack" : "packs"})
                   </p>
                   <p className="text-xs text-[#C9B9A6]">
-                    Paspor publik dan lembar stiker QR sudah aktif dan siap
-                    dicetak.
+                    {locale === "id"
+                      ? "Paspor publik dan lembar stiker QR sudah aktif dan siap dicetak."
+                      : "The public passport and printable QR sticker sheet are now live."}
                   </p>
                 </div>
               </div>
@@ -224,13 +241,17 @@ export function StudioWorkspace() {
                   className="inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[#EBB44C] px-4 text-xs font-bold text-[#1C130C]"
                 >
                   <Printer size={15} weight="bold" />
-                  <span>Cetak Stiker QR</span>
+                  <span>
+                    {locale === "id" ? "Cetak Stiker QR" : "Print QR Stickers"}
+                  </span>
                 </Link>
                 <Link
                   href={`/b/${encodeURIComponent(justCreated.id)}`}
                   className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-[#281C13] px-4 text-xs font-semibold text-[#FAF6EE] ring-1 ring-[#3D2C1E]"
                 >
-                  <span>Buka Paspor</span>
+                  <span>
+                    {locale === "id" ? "Buka Paspor" : "Open Passport"}
+                  </span>
                   <ArrowUpRight size={14} weight="bold" />
                 </Link>
                 <button
@@ -238,7 +259,7 @@ export function StudioWorkspace() {
                   onClick={() => setJustCreated(null)}
                   className="min-h-[42px] px-2 text-xs text-[#C9B9A6] hover:text-white"
                 >
-                  Tutup
+                  {locale === "id" ? "Tutup" : "Dismiss"}
                 </button>
               </div>
             </div>
@@ -246,7 +267,6 @@ export function StudioWorkspace() {
         )}
       </AnimatePresence>
 
-      {/* Workspace Navigation Tabs */}
       <div className="mt-7 flex flex-wrap items-center justify-between gap-4 border-b border-[#E2D5BE] pb-4">
         <div
           role="tablist"
@@ -256,17 +276,26 @@ export function StudioWorkspace() {
             [
               {
                 id: "batches",
-                label: `Batch Produksi (${myBatches.length})`,
+                label:
+                  locale === "id"
+                    ? `Batch Produksi (${myBatches.length})`
+                    : `Production Batches (${myBatches.length})`,
                 icon: Storefront,
               },
               {
                 id: "inbox",
-                label: `Pesan Buyer (${myFeedback.length})`,
+                label:
+                  locale === "id"
+                    ? `Pesan Buyer (${myFeedback.length})`
+                    : `Buyer Inbox (${myFeedback.length})`,
                 icon: ChatCircleText,
               },
               {
                 id: "profile",
-                label: "Profil & Legalitas",
+                label:
+                  locale === "id"
+                    ? "Profil & Legalitas"
+                    : "Profile & Permits",
                 icon: UserCircle,
               },
             ] as const
@@ -311,39 +340,57 @@ export function StudioWorkspace() {
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari kode batch atau lot..."
+                placeholder={
+                  locale === "id"
+                    ? "Cari kode batch atau lot..."
+                    : "Search batch ID or lot..."
+                }
                 className="min-h-[42px] w-full rounded-xl border border-[#E2D5BE] bg-[#FFFDF9] pl-9 pr-3 text-sm text-[#24170E]"
               />
             </div>
             <select
-              aria-label="Filter status batch"
+              aria-label={
+                locale === "id" ? "Filter status batch" : "Filter batch status"
+              }
               value={statusFilter}
               onChange={(e) =>
                 setStatusFilter(e.target.value as BatchStatus | "all")
               }
               className="min-h-[42px] rounded-xl border border-[#E2D5BE] bg-[#FFFDF9] px-3 text-sm text-[#24170E]"
             >
-              <option value="all">Semua Status</option>
-              <option value="fermenting">Sedang Fermentasi</option>
-              <option value="quality_check">Inspeksi Mutu</option>
-              <option value="packaged">Siap Distribusi</option>
-              <option value="dispatched">Terkirim</option>
+              <option value="all">
+                {locale === "id" ? "Semua Status" : "All Statuses"}
+              </option>
+              <option value="fermenting">
+                {getStatusLabel("fermenting", locale)}
+              </option>
+              <option value="quality_check">
+                {getStatusLabel("quality_check", locale)}
+              </option>
+              <option value="packaged">
+                {getStatusLabel("packaged", locale)}
+              </option>
+              <option value="dispatched">
+                {getStatusLabel("dispatched", locale)}
+              </option>
             </select>
           </div>
         )}
       </div>
 
-      {/* Tab 1: Zero-Horizontal-Scroll Batch Ledger */}
       {activeTab === "batches" && (
         <section className="mt-6">
           {filteredBatches.length === 0 ? (
             <div className="rounded-3xl bg-[#FFFDF9] p-10 text-center ring-1 ring-[#E2D5BE]">
               <p className="font-serif text-xl font-semibold text-[#24170E]">
-                Belum ada batch yang cocok dengan pencarian
+                {locale === "id"
+                  ? "Belum ada batch yang cocok dengan pencarian"
+                  : "No batches match the current filter"}
               </p>
               <p className="mt-1 text-sm text-[#634B3A]">
-                Ubah filter atau catat batch produksi baru untuk membuat kode QR
-                kemasan.
+                {locale === "id"
+                  ? "Ubah filter atau catat batch produksi baru untuk membuat kode QR kemasan."
+                  : "Adjust your search or log a new batch to generate package QR codes."}
               </p>
               <button
                 type="button"
@@ -353,44 +400,58 @@ export function StudioWorkspace() {
                 }}
                 className="mt-4 min-h-[42px] rounded-full bg-[#F2EAD9] px-5 text-xs font-semibold text-[#24170E]"
               >
-                Tampilkan Semua Batch
+                {locale === "id" ? "Tampilkan Semua Batch" : "Show All Batches"}
               </button>
             </div>
           ) : (
             <div className="overflow-hidden rounded-[1.5rem] bg-[#FFFDF9] ring-1 ring-[#E2D5BE]">
               <div className="hidden grid-cols-12 border-b border-[#E2D5BE] bg-[#FAF6EE] px-6 py-3 text-xs font-semibold uppercase tracking-wider text-[#634B3A] lg:grid">
-                <div className="col-span-4">Batch &amp; Produk</div>
-                <div className="col-span-3">Kedelai &amp; Inkubasi</div>
-                <div className="col-span-2">Status &amp; Scan</div>
-                <div className="col-span-3 text-right">Aksi Operasional</div>
+                <div className="col-span-4">
+                  {locale === "id" ? "Batch & Produk" : "Batch & Product"}
+                </div>
+                <div className="col-span-3">
+                  {locale === "id"
+                    ? "Kedelai & Inkubasi"
+                    : "Soybean & Incubation"}
+                </div>
+                <div className="col-span-2">
+                  {locale === "id" ? "Status & Scan" : "Status & Scans"}
+                </div>
+                <div className="col-span-3 text-right">
+                  {locale === "id" ? "Aksi Operasional" : "Actions"}
+                </div>
               </div>
 
               <div className="divide-y divide-[#E2D5BE]/80">
                 {filteredBatches.map((batch) => {
                   const nextStatus = NEXT_STATUS[batch.status];
-                  const nextLabel = NEXT_STATUS_CTA[batch.status];
+                  const nextLabel = NEXT_STATUS_CTA[batch.status]?.[locale];
 
                   return (
                     <div
                       key={batch.id}
                       className="grid items-center gap-4 px-5 py-4 transition-colors hover:bg-[#FAF6EE]/70 lg:grid-cols-12 lg:px-6"
                     >
-                      {/* Two-tier stacked cell: title + muted metadata */}
                       <div className="min-w-0 lg:col-span-4">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-mono text-xs font-bold text-[#9A4D1A]">
                             {batch.id}
                           </span>
                           <span className="font-mono text-[11px] text-[#634B3A]">
-                            · {formatDate(batch.production.productionDate, "id")}
+                            ·{" "}
+                            {formatDate(batch.production.productionDate, locale)}
                           </span>
                         </div>
                         <p className="mt-1 truncate text-sm font-semibold text-[#24170E]">
-                          {batch.productName}
+                          {locale === "id"
+                            ? batch.productName
+                            : batch.productNameEn}
                         </p>
                         <p className="mt-0.5 text-xs text-[#634B3A]">
-                          {batch.quantityPacks} pack ({batch.netWeightGrams}g) ·{" "}
-                          {getChannelLabel(batch.distribution.channel, "id")}
+                          {batch.quantityPacks}{" "}
+                          {locale === "id" ? "pack" : "packs"} (
+                          {batch.netWeightGrams}g) ·{" "}
+                          {getChannelLabel(batch.distribution.channel, locale)}
                         </p>
                       </div>
 
@@ -418,10 +479,11 @@ export function StudioWorkspace() {
                           ) : (
                             <CheckCircle size={14} weight="fill" />
                           )}
-                          <span>{getStatusLabel(batch.status, "id")}</span>
+                          <span>{getStatusLabel(batch.status, locale)}</span>
                         </span>
                         <span className="font-mono text-xs tabular-nums text-[#634B3A]">
-                          {batch.scanCount} pindai QR
+                          {batch.scanCount}{" "}
+                          {locale === "id" ? "pindai QR" : "QR scans"}
                         </span>
                       </div>
 
@@ -449,7 +511,9 @@ export function StudioWorkspace() {
                           href={`/b/${encodeURIComponent(batch.id)}`}
                           className="inline-flex min-h-[38px] items-center gap-1 rounded-xl bg-[#24170E] px-3 text-xs font-semibold text-[#FAF6EE] hover:bg-[#9A4D1A]"
                         >
-                          <span>Paspor</span>
+                          <span>
+                            {locale === "id" ? "Paspor" : "Passport"}
+                          </span>
                           <ArrowUpRight size={13} weight="bold" />
                         </Link>
                       </div>
@@ -462,17 +526,19 @@ export function StudioWorkspace() {
         </section>
       )}
 
-      {/* Tab 2: Incoming Buyer Feedback & Export Inquiries */}
       {activeTab === "inbox" && (
         <section className="mt-6 space-y-4">
           {myFeedback.length === 0 ? (
             <div className="rounded-3xl bg-[#FFFDF9] p-10 text-center ring-1 ring-[#E2D5BE]">
               <p className="font-serif text-xl font-semibold text-[#24170E]">
-                Belum ada pesan pembeli masuk
+                {locale === "id"
+                  ? "Belum ada pesan pembeli masuk"
+                  : "No buyer messages yet"}
               </p>
               <p className="mt-1 text-sm text-[#634B3A]">
-                Setiap masukan atau permintaan sampel yang dikirim dari halaman
-                paspor QR akan tampil di sini.
+                {locale === "id"
+                  ? "Setiap masukan atau permintaan sampel yang dikirim dari halaman paspor QR akan tampil di sini."
+                  : "Quality notes and wholesale inquiries submitted from public QR passports will appear here."}
               </p>
             </div>
           ) : (
@@ -498,7 +564,7 @@ export function StudioWorkspace() {
                       >
                         {item.batchId}
                       </Link>
-                      <span>· {formatDate(item.createdAt, "id")}</span>
+                      <span>· {formatDate(item.createdAt, locale)}</span>
                     </div>
                   </div>
                   <span className="inline-flex items-center gap-1 rounded-full bg-[#F7EADC] px-3 py-1 font-mono text-xs font-bold text-[#9A4D1A]">
@@ -515,15 +581,17 @@ export function StudioWorkspace() {
         </section>
       )}
 
-      {/* Tab 3: Producer Profile & Legal Certifications */}
       {activeTab === "profile" && (
         <section className="mt-6 max-w-2xl rounded-[1.5rem] bg-[#FFFDF9] p-6 ring-1 ring-[#E2D5BE]">
           <h2 className="font-serif text-2xl font-semibold text-[#24170E]">
-            Identitas Rumah Produksi &amp; Izin Edar
+            {locale === "id"
+              ? "Identitas Rumah Produksi & Izin Edar"
+              : "Workshop Identity & Permits"}
           </h2>
           <p className="mt-1 text-sm text-[#634B3A]">
-            Perubahan di sini otomatis memperbarui data profil pada seluruh
-            halaman paspor QR milik usahamu.
+            {locale === "id"
+              ? "Perubahan di sini otomatis memperbarui data profil pada seluruh halaman paspor QR milik usahamu."
+              : "Updates saved here immediately reflect on every public batch passport issued by your workshop."}
           </p>
 
           <form onSubmit={handleProfileSave} className="mt-6 space-y-4">
@@ -532,7 +600,7 @@ export function StudioWorkspace() {
                 htmlFor="prof-name"
                 className="block text-xs font-semibold uppercase tracking-wider text-[#634B3A]"
               >
-                Nama Rumah Produksi
+                {locale === "id" ? "Nama Rumah Produksi" : "Workshop Name"}
               </label>
               <input
                 id="prof-name"
@@ -548,7 +616,9 @@ export function StudioWorkspace() {
                 htmlFor="prof-owner"
                 className="block text-xs font-semibold uppercase tracking-wider text-[#634B3A]"
               >
-                Nama Pemilik / Penanggung Jawab CPPB
+                {locale === "id"
+                  ? "Nama Pemilik / Penanggung Jawab CPPB"
+                  : "Owner / CPPB Responsible Person"}
               </label>
               <input
                 id="prof-owner"
@@ -565,7 +635,7 @@ export function StudioWorkspace() {
                   htmlFor="prof-pirt"
                   className="block text-xs font-semibold uppercase tracking-wider text-[#634B3A]"
                 >
-                  Nomor P-IRT
+                  {locale === "id" ? "Nomor P-IRT" : "P-IRT Registration"}
                 </label>
                 <input
                   id="prof-pirt"
@@ -581,7 +651,9 @@ export function StudioWorkspace() {
                   htmlFor="prof-halal"
                   className="block text-xs font-semibold uppercase tracking-wider text-[#634B3A]"
                 >
-                  Nomor Sertifikat Halal
+                  {locale === "id"
+                    ? "Nomor Sertifikat Halal"
+                    : "Halal Certificate ID"}
                 </label>
                 <input
                   id="prof-halal"
@@ -595,16 +667,36 @@ export function StudioWorkspace() {
 
             <div>
               <label
-                htmlFor="prof-story"
+                htmlFor="prof-story-en"
                 className="block text-xs font-semibold uppercase tracking-wider text-[#634B3A]"
               >
-                Cerita Singkat Rumah Produksi (Tampil di Paspor Pembeli)
+                {locale === "id"
+                  ? "Cerita Rumah Produksi (Versi Inggris / Ekspor)"
+                  : "Workshop Story (English / Export Buyers)"}
               </label>
               <textarea
-                id="prof-story"
-                rows={4}
-                value={profileStory}
-                onChange={(e) => setProfileStory(e.target.value)}
+                id="prof-story-en"
+                rows={3}
+                value={profileStoryEn}
+                onChange={(e) => setProfileStoryEn(e.target.value)}
+                className="mt-1.5 w-full rounded-xl border border-[#E2D5BE] bg-[#FAF6EE] p-3.5 text-sm leading-relaxed text-[#24170E]"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="prof-story-id"
+                className="block text-xs font-semibold uppercase tracking-wider text-[#634B3A]"
+              >
+                {locale === "id"
+                  ? "Cerita Rumah Produksi (Versi Bahasa Indonesia)"
+                  : "Workshop Story (Indonesian)"}
+              </label>
+              <textarea
+                id="prof-story-id"
+                rows={3}
+                value={profileStoryId}
+                onChange={(e) => setProfileStoryId(e.target.value)}
                 className="mt-1.5 w-full rounded-xl border border-[#E2D5BE] bg-[#FAF6EE] p-3.5 text-sm leading-relaxed text-[#24170E]"
               />
             </div>
@@ -614,12 +706,14 @@ export function StudioWorkspace() {
                 type="submit"
                 className="inline-flex min-h-[46px] items-center gap-2 rounded-full bg-[#9A4D1A] px-6 text-sm font-semibold text-white hover:bg-[#7D3C12]"
               >
-                <span>Simpan Perubahan</span>
+                <span>
+                  {locale === "id" ? "Simpan Perubahan" : "Save Changes"}
+                </span>
               </button>
               {profileSaved && (
                 <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#23603E]">
                   <Check size={16} weight="bold" />
-                  Tersimpan
+                  {locale === "id" ? "Tersimpan" : "Saved"}
                 </span>
               )}
             </div>
